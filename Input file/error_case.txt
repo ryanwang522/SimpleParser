@@ -1,0 +1,17 @@
+int a = 5;
+int b = 6*a;
+int c = 0;
+double d = 12;
+int e = 20.0;
+double f = (1+2)*48.48/12.12 *(0.4 + 0.1);
+int g;
+print(g);
+b = 48/6.0;
+print(k);
+c = 52/0;
+L = 8;
+int b = 2;
+a = 4*G;
+c = (19+b)*10;
+print(a * c);
+print("Hello");
