@@ -1,8 +1,3 @@
-/*
-	Topic: Homework2 for Compiler Course
-	Deadline: xxx.xx.xxxx
-*/
-
 %{
 
 /*	Definition section */
@@ -81,8 +76,6 @@ int symnum;
 /*  Type definition:
     Define the type by %union{} to specify the type of token */
 %union {
-    //int *int_number;
-    //double *d_number;
 	selector * type_selector;
     char *str;
 }
@@ -93,8 +86,6 @@ int symnum;
 */
 %type <str> DCL ID STRING
 %type <type_selector> Factor Group Term Arith NUMBER FLOATNUM
-//%type <int_number> Factor Group Term Arith NUMBER
-//%type <d_number> FLOATNUM
 
 %%
 

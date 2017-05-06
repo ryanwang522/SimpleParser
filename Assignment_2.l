@@ -12,60 +12,58 @@ int buf;
 double dbuf;
 %}
 
-letter		[a-zA-Z]
-digit		[0-9]
-num			[0-9]+
-floatnum	[+-]?{num}\.{num}
-id			{letter}+({letter}|{digit})*
+letter      [a-zA-Z]
+digit       [0-9]
+num	        [0-9]+
+floatnum    [+-]?{num}\.{num}
+id          {letter}+({letter}|{digit})*
 DECLR       ([Ii][Nn][Tt]|[Dd][Oo][Uu][Bb][Ll][Ee])[ ]{id}
-sem			[;]
-space		[ ]
+sem         [;]
+space       [ ]
 
 %%
 
-"//".+\n						{ yylineno++;}
-"/*"(.+\n?)*"*/"				{ 	
-									char* t = strtok(yytext,"\n");
-									while( t != NULL ) {
-						  				yylineno++;
-						  				t = strtok(NULL, "\n");
-									}
-									yylineno --;
-								}
-
-"("								{ return LB;}
-")"								{ return RB;}
-"+" 							{ return ADD;}
-"-" 							{ return SUB;}
-"*" 							{ return MUL;}
-"/"								{ return DIV;}
-"=" 							{ return ASSIGN;}
-{DECLR}							{ yylval.str = strdup(yytext); return DCL;}
-{sem}							{ return SEM;}
-([Pp][Rr][Ii][Nn][Tt])			{ return PRINT;}
-([Ww][Hh][Ii][Ll][Ee])			{ return WHILE;}
-([Ii][Nn][Tt])					{ return INT;}
-([Dd][Oo][Uu][Bb][Ll][Ee])		{ return DOUBLE;}
-[\n]							{ yylineno++;}
-"\"".+"\""						{ yylval.str = strdup(yytext); return STRING;}
-{num}							{
-									//yylval.int_number = atoi(yytext);
-									buf = atoi(yytext);
-									yylval.type_selector = malloc(sizeof(selector));
-									assert(yylval.type_selector && "malloc error");
-									(yylval.type_selector)->int_number = buf;
-									return NUMBER;
-								}
+"//".+\n                        { yylineno++;}
+"/*"(.+\n?)*"*/"                { 	
+                                    char* t = strtok(yytext,"\n");
+                                    while( t != NULL ) {
+                                          yylineno++;
+                                          t = strtok(NULL, "\n");
+                                    }
+                                    yylineno --;
+                                }
+"("                             { return LB;}
+")"							    { return RB;}
+"+"                             { return ADD;}
+"-"                             { return SUB;}
+"*"                             { return MUL;}
+"/"                             { return DIV;}
+"="                             { return ASSIGN;}
+{DECLR}                         { yylval.str = strdup(yytext); return DCL;}
+{sem}                           { return SEM;}
+([Pp][Rr][Ii][Nn][Tt])          { return PRINT;}
+([Ww][Hh][Ii][Ll][Ee])          { return WHILE;}
+([Ii][Nn][Tt])                  { return INT;}
+([Dd][Oo][Uu][Bb][Ll][Ee])      { return DOUBLE;}
+[\n]                            { yylineno++;}
+"\"".+"\""                      { yylval.str = strdup(yytext); return STRING;}
+{num}                           {
+                                    buf = atoi(yytext);
+                                    yylval.type_selector = malloc(sizeof(selector));
+                                    assert(yylval.type_selector && "malloc error");
+                                    (yylval.type_selector)->int_number = buf;
+                                    return NUMBER;
+                                }
 {floatnum} 						{
-									sscanf(yytext, "%lf", &dbuf);
-									yylval.type_selector = malloc(sizeof(selector));
-									assert(yylval.type_selector && "malloc error");
-									(yylval.type_selector)->db_number = dbuf;
-									return FLOATNUM;
-								}
-{id}							{ yylval.str = strdup(yytext); /*printf("***%p\n",yylval.str);*/ return ID;}
-[ \t]							{;} /* Ignore */
-[^ \n\t] 						{;} /* Ignore other charactor sets */
+                                    sscanf(yytext, "%lf", &dbuf);
+                                    yylval.type_selector = malloc(sizeof(selector));
+                                    assert(yylval.type_selector && "malloc error");
+                                    (yylval.type_selector)->db_number = dbuf;
+                                    return FLOATNUM;
+                                }
+{id}							{ yylval.str = strdup(yytext); return ID;}
+[ \t]                           {;} /* Ignore */
+[^ \n\t]                        {;} /* Ignore other charactor sets */
 %%
 
 int yywrap()
