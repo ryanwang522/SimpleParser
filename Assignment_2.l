@@ -54,14 +54,14 @@ space       [ ]
                                     (yylval.type_selector)->int_number = buf;
                                     return NUMBER;
                                 }
-{floatnum} 						{
+{floatnum}                      {
                                     sscanf(yytext, "%lf", &dbuf);
                                     yylval.type_selector = malloc(sizeof(selector));
                                     assert(yylval.type_selector && "malloc error");
                                     (yylval.type_selector)->db_number = dbuf;
                                     return FLOATNUM;
                                 }
-{id}							{ yylval.str = strdup(yytext); return ID;}
+{id}                            { yylval.str = strdup(yytext); return ID;}
 [ \t]                           {;} /* Ignore */
 [^ \n\t]                        {;} /* Ignore other charactor sets */
 %%
