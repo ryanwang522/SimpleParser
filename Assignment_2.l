@@ -14,7 +14,7 @@ double dbuf;
 
 letter      [a-zA-Z]
 digit       [0-9]
-num	        [0-9]+
+num         [0-9]+
 floatnum    [+-]?{num}\.{num}
 id          {letter}+({letter}|{digit})*
 DECLR       ([Ii][Nn][Tt]|[Dd][Oo][Uu][Bb][Ll][Ee])[ ]{id}
