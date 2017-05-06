@@ -33,7 +33,7 @@ space       [ ]
                                     yylineno --;
                                 }
 "("                             { return LB;}
-")"							    { return RB;}
+")"                             { return RB;}
 "+"                             { return ADD;}
 "-"                             { return SUB;}
 "*"                             { return MUL;}
