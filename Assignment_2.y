@@ -11,7 +11,7 @@
 #include <assert.h>
 
 #define MAX_TYPE_LEN 8
-#define MAX_ID_LEN 64
+#define MAX_ID_LEN 128
 #define RESET "\033[0m"
 #define RED "\033[31m"
 #define GRN "\033[32m"
@@ -24,16 +24,16 @@ typedef struct __SYMBOL_ENTRY {
     struct __SYMBOL_ENTRY *pNext;
 } entry;
 
-
-
-int linenum = 0;    //init to 0 cuz the last line contains \n
 int indx = 1;
 char type[MAX_TYPE_LEN];
 char id[MAX_ID_LEN];
-bool created = false; // check if symbol table has been created
-void *garbage[512]; //prepare for free()
+
+/* check if symbol table has been created */
+bool created = false;
+
+/* prepare for free() */
+void *garbage[512];
 int garbageIndex = 0;
-bool workOnDouble = false; // to distinguish Arith on int or double
 
 entry *pHead;
 
@@ -44,7 +44,7 @@ extern int yylex();
 void yyerror(char *);
 
 
-/*Symbol table function */
+/*	Symbol table function */
 void Create_symbol();
 void Insert_symbol(entry **, char *, char *);
 bool Lookup_symbol(char *);
@@ -63,11 +63,14 @@ int symnum;
 
 %code requires{
     typedef struct __TYPE_SELECTOR {
-    int int_number;
-    double db_number;
-    int intArith;   //0: Not set 1: int 2:double
+        int int_number;
+        double db_number;
+
+        /* true:int, false:double */
+        bool intArith;
     } selector;
 }
+
 /* Token definition */
 %token SEM PRINT WHILE INT DOUBLE LB RB
 %token STRING ADD SUB MUL DIV
@@ -110,20 +113,19 @@ Decl: DCL               {
                         }
     | DCL ASSIGN Arith  {
                             sscanf($1, "%s %s", type, id);
-                            //printf("%s / %s\n", type, id);
                             if (!created) Create_symbol();
                             if (!checkReDeclr(id)) {
                                 Insert_symbol(&pHead, type, id);
                                 if (Lookup_symbol(id))
                                     if (strcmp(type, "int") == 0) {
-                                        if ($3->intArith == 1)
+                                        if ($3->intArith)
                                             Assign_symbol(id, &($3->int_number));
                                         else {
                                             int buf = (int)$3->db_number;
                                             Assign_symbol(id, &buf);
                                         }
                                     } else {
-                                        if ($3->intArith == 1) {
+                                        if ($3->intArith) {
                                             double dbuf = (double)$3->int_number;
                                             Assign_symbol(id, &dbuf); 
                                         } else
@@ -134,19 +136,19 @@ Decl: DCL               {
     ;
 
 Assign:
-      ID ASSIGN Arith   {   //if ($3) printf("%p Arith = %d\n", $3, $3->int_number);
+      ID ASSIGN Arith   {   
                             if (Lookup_symbol($1) && $3) {
                                 printf("ASSIGN\n");
                                 entry *target = getEntry($1);
                                 if (strcmp(target->type, "int") == 0) {
-                                    if ($3->intArith == 1)
+                                    if ($3->intArith)
                                         Assign_symbol($1, &($3->int_number));
                                     else {
                                         int buf = (int)$3->db_number;
                                         Assign_symbol($1, &buf);
                                     }
                                 } else {
-                                    if ($3->intArith == 1) {
+                                    if ($3->intArith) {
                                         double dbuf = (double)$3->int_number;
                                         Assign_symbol($1, &dbuf);
                                     } else 
@@ -157,99 +159,82 @@ Assign:
     ;
 
 Arith: 
-      Term              {     
-                            if ($1) {
-                                //printf("$$: %p, Term: %d\n", $$, $1->int_number);
-                                $$ = $1;
-                            }
-                            else 
-                                $$ = NULL;
-                        }
-    | Arith ADD Term    { printf("Add\n");
-                            //*$$ = *$1 + *$3;
-                            if ($1->intArith == 2 && $3->intArith == 2) {
+      Term              {   $$ = $1 ? $1 : NULL; }
+    | Arith ADD Term    {
+                            printf("Add\n");
+                            if (!$1->intArith && !$3->intArith) {
                                 $$->db_number = $1->db_number + $3->db_number;
-                                $$->intArith = 2;
-                            } else if ($1->intArith == 2 && $3->intArith == 1) {
+                                $$->intArith = false;
+                            } else if (!$1->intArith && $3->intArith) {
                                 $$->db_number = $1->db_number + $1->int_number; // db + int = db
-                                $$->intArith = 2;
-                            } else if ($1->intArith == 1 && $3->intArith == 2) {
+                                $$->intArith = false;
+                            } else if ($1->intArith && !$3->intArith) {
                                 $$->db_number = $1->int_number + $3->db_number;
-                                $$->intArith = 2;
+                                $$->intArith = false;
                             } else {
                                 $$->int_number = $1->int_number + $3->int_number;
-                                $$->intArith = 1;
+                                $$->intArith = true;
                             }
                         }
-    | Arith SUB Term    { printf("Sub\n"); //*$$ = *$1 - *$3; 
-                            if ($1->intArith == 2 && $3->intArith == 2) {
+    | Arith SUB Term    {   
+                            printf("Sub\n"); 
+                            if (!$1->intArith && !$3->intArith) {
                                 $$->db_number = $1->db_number - $3->db_number;
-                                $$->intArith = 2;
-                            } else if ($1->intArith == 2 && $3->intArith == 1) {
+                                $$->intArith = false;
+                            } else if (!$1->intArith && $3->intArith) {
                                 $$->db_number = $1->db_number - $1->int_number; // db + int = db
-                                $$->intArith = 2;
-                            } else if ($1->intArith == 1 && $3->intArith == 2) {
+                                $$->intArith = false;
+                            } else if ($1->intArith && !$3->intArith) {
                                 $$->db_number = $1->int_number - $3->db_number;
-                                $$->intArith = 2;
+                                $$->intArith = false;
                             } else {
                                 $$->int_number = $1->int_number - $3->int_number;
-                                $$->intArith = 1;
+                                $$->intArith = true;
                             }
                         }
     ;
 
-Term: Factor            {   if ($1 != NULL) {
-                                $$ = $1;
-                                //printf("$$: %p , Factor: %d\n", $$, $$->int_number);
-                            } else
-                                $$ = NULL;
-                                //printf("nnn\n");
-                        }
+Term: Factor            {   $$ = $1 ? $1 : NULL; }
     | Term MUL Factor   {
                             if ($3 != NULL) {
                                 printf("Mul\n");
-                                //printf("%d %d\n", $1->intArith, $3->intArith);
-                                if ($1->intArith == 2 && $3->intArith == 2) {
+                                if (!$1->intArith && !$3->intArith) {
                                     $$->db_number = $1->db_number * $3->db_number;
-                                    $$->intArith = 2;
-                                } else if ($1->intArith == 2 && $3->intArith == 1) {
+                                    $$->intArith = false;
+                                } else if (!$1->intArith && $3->intArith) {
                                     $$->db_number = $1->db_number * $1->int_number; // db * int = db
-                                    $$->intArith = 2;
-                                } else if ($1->intArith == 1 && $3->intArith == 2) {
+                                    $$->intArith = false;
+                                } else if ($1->intArith && !$3->intArith) {
                                     $$->db_number = $1->int_number * $3->db_number;
-                                    $$->intArith = 2;
+                                    $$->intArith = false;
                                 } else {
-                                    //printf("mul: %d %d\n", $1->int_number, $3->int_number);
                                     $$->int_number = $1->int_number * $3->int_number;
-                                    $$->intArith = 1;
+                                    $$->intArith = true;
                                 }
 
                             } else 
-                                $$ = NULL;
-                                //printf("nullllll\n");
-                            
+                                $$ = NULL;            
                         }
     | Term DIV Factor   {   
-                            if (($3->intArith == 1 && $3->int_number == 0)
-                                 || ( $3->intArith == 2 && $3->db_number == 0.0)) {
-                                printf(RED "<ERROR> " RESET "The divsor can't be 0 " GRN "-- line %d\n" RESET
-                                        , yylineno);
+                            if (($3->intArith && $3->int_number == 0)
+                                 || ( !$3->intArith && $3->db_number == 0.0)) {
+                                printf(RED "<ERROR> " RESET "The divsor can't be 0 "
+                                       GRN "-- line %d\n" RESET, yylineno);
                                 $$ = NULL;
                             } else {
                                 printf("Div\n");
-                                //*$$ = *$1 / (*$3);
-                                if ($1->intArith == 2 && $3->intArith == 2) {
+                                if (!$1->intArith && !$3->intArith) {
                                     $$->db_number = $1->db_number / $3->db_number;
-                                    $$->intArith = 2;
-                                } else if ($1->intArith == 2 && $3->intArith == 1) {
+                                    $$->intArith = false;
+                                } else if (!$1->intArith && $3->intArith) {
                                     $$->db_number = $1->db_number / $1->int_number; // db * int = db
-                                    $$->intArith = 2;
-                                } else if ($1->intArith == 1 && $3->intArith == 2) {
+                                    $$->intArith = false;
+                                } else if ($1->intArith && !$3->intArith) {
                                     $$->db_number = $1->int_number / $3->db_number;
-                                    $$->intArith = 2;
+                                    $$->intArith = false;
                                 } else {
                                     $$->int_number = $1->int_number / $3->int_number;
-                                    $$->intArith = 1;
+                                    $$->intArith = true;
                                 }
                             }
                         }
@@ -257,28 +242,27 @@ Term: Factor            {   if ($1 != NULL) {
 
 Factor:
       Group             { 
-                            if ($$->intArith == 1) $$->int_number = $1->int_number;
+                            if ($$->intArith) $$->int_number = $1->int_number;
                             else $$->db_number = $1->db_number;
                         }
     | NUMBER            { 
-                            $$->intArith = 1;
+                            $$->intArith = true;
                             $$->int_number = $1->int_number;
-                            //printf("$$:%p, NUMBER: %d\n", $$, $1->int_number); 
                         }
     | FLOATNUM          { 
-                            $$->intArith = 2;
+                            $$->intArith = false;
                             $$->db_number = $1->db_number;
                         }
-    | ID                {   //need modify
+    | ID                {
                             if (Lookup_symbol($1)) {
                                 entry *target = getEntry($1);
                                 if (target->data != NULL) {
                                     if (strcmp(target->type, "int") == 0) {
                                         $$->int_number = *((int *)target->data);
-                                        $$->intArith = 1;
+                                        $$->intArith = true;
                                     } else {
                                         $$->db_number = *((double *)target->data);
-                                        $$->intArith = 2;
+                                        $$->intArith = false;
                                     }
                                 } else {
                                     printf(RED "<ERROR> " RESET "Variable %s uninitialize " GRN "-- line %d\n" RESET
@@ -292,7 +276,7 @@ Factor:
 
 Print: PRINT Group      { 
                             if($2) {
-                                if ($2->intArith == 1) 
+                                if ($2->intArith) 
                                     printf("Print: %d\n", $2->int_number);
                                 else
                                     printf("Print: %lf\n", $2->db_number);
@@ -306,7 +290,6 @@ Group: LB Arith RB      {
                                 $$ = malloc(sizeof(selector));
                                 garbage[garbageIndex++] = $$;
                                 assert(garbageIndex < 512 && "garbageIndex overflow");
-                                //printf("$$:%p, Group: %d\n", $$, $2->int_number);
                                 $$ = $2;
                             } else
                                 $$ = NULL;
@@ -364,7 +347,6 @@ bool Lookup_symbol(char* sym)
     entry *curr = pHead;
 
     while (curr != NULL) {
-        //printf("sym = %s, id = %s\n", sym, curr->id);
         if (strcmp(sym, curr->id) == 0) 
             return true;
         curr = curr -> pNext;
@@ -392,18 +374,20 @@ void Assign_symbol(char *id, void *data)
                 }
                 *((int *)curr->data) = *((int *)data);
             } else if (strcmp(curr->type, "double") == 0) {
+                /* First assignment -- need malloc */
                 if (!curr->data) {
                     curr->data = (double *) malloc(sizeof(double));
                     assert(curr->data && "malloc error\n");
                 }
                 *((double *)curr->data) = *((double *)data);
             }
-            
+
             return;
         }
         curr = curr -> pNext;
     }
-
+    printf(RED "<ERROR> " RESET "Can't find %s variable "
+           GRN "-- line %d" RESET, id, yylineno);
     return;
 }
 
