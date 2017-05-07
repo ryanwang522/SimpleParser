@@ -1,5 +1,6 @@
 # SimpleParser
-Simple Parser with Lex/Yacc
+Simple Parser with Lex/Yacc.
+Provide NO SURPORTTING for while statement.
 
 ### Usage
 `$ make`
