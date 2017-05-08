@@ -137,8 +137,8 @@ Decl: DCL               {
 
 Assign:
       ID ASSIGN Arith   {   
+                            printf("ASSIGN\n");
                             if (Lookup_symbol($1) && $3) {
-                                printf("ASSIGN\n");
                                 entry *target = getEntry($1);
                                 if (strcmp(target->type, "int") == 0) {
                                     if ($3->intArith)
@@ -162,42 +162,46 @@ Arith:
       Term              {   $$ = $1 ? $1 : NULL; }
     | Arith ADD Term    {
                             printf("Add\n");
-                            if (!$1->intArith && !$3->intArith) {
-                                $$->db_number = $1->db_number + $3->db_number;
-                                $$->intArith = false;
-                            } else if (!$1->intArith && $3->intArith) {
-                                $$->db_number = $1->db_number + $1->int_number; // db + int = db
-                                $$->intArith = false;
-                            } else if ($1->intArith && !$3->intArith) {
-                                $$->db_number = $1->int_number + $3->db_number;
-                                $$->intArith = false;
-                            } else {
-                                $$->int_number = $1->int_number + $3->int_number;
-                                $$->intArith = true;
+                            if ($1 && $3) {
+                                if (!$1->intArith && !$3->intArith) {
+                                    $$->db_number = $1->db_number + $3->db_number;
+                                    $$->intArith = false;
+                                } else if (!$1->intArith && $3->intArith) {
+                                    $$->db_number = $1->db_number + $1->int_number; // db + int = db
+                                    $$->intArith = false;
+                                } else if ($1->intArith && !$3->intArith) {
+                                    $$->db_number = $1->int_number + $3->db_number;
+                                    $$->intArith = false;
+                                } else {
+                                    $$->int_number = $1->int_number + $3->int_number;
+                                    $$->intArith = true;
+                                }
                             }
                         }
     | Arith SUB Term    {   
-                            printf("Sub\n"); 
-                            if (!$1->intArith && !$3->intArith) {
-                                $$->db_number = $1->db_number - $3->db_number;
-                                $$->intArith = false;
-                            } else if (!$1->intArith && $3->intArith) {
-                                $$->db_number = $1->db_number - $1->int_number; // db + int = db
-                                $$->intArith = false;
-                            } else if ($1->intArith && !$3->intArith) {
-                                $$->db_number = $1->int_number - $3->db_number;
-                                $$->intArith = false;
-                            } else {
-                                $$->int_number = $1->int_number - $3->int_number;
-                                $$->intArith = true;
+                            printf("Sub\n");
+                            if ($1 && $3) {
+                                if (!$1->intArith && !$3->intArith) {
+                                    $$->db_number = $1->db_number - $3->db_number;
+                                    $$->intArith = false;
+                                } else if (!$1->intArith && $3->intArith) {
+                                    $$->db_number = $1->db_number - $1->int_number; // db + int = db
+                                    $$->intArith = false;
+                                } else if ($1->intArith && !$3->intArith) {
+                                    $$->db_number = $1->int_number - $3->db_number;
+                                    $$->intArith = false;
+                                } else {
+                                    $$->int_number = $1->int_number - $3->int_number;
+                                    $$->intArith = true;
+                                }
                             }
                         }
     ;
 
 Term: Factor            {   $$ = $1 ? $1 : NULL; }
     | Term MUL Factor   {
-                            if ($3 != NULL) {
-                                printf("Mul\n");
+                            printf("Mul\n");
+                            if ($1 && $3) {
                                 if (!$1->intArith && !$3->intArith) {
                                     $$->db_number = $1->db_number * $3->db_number;
                                     $$->intArith = false;
@@ -211,30 +215,31 @@ Term: Factor            {   $$ = $1 ? $1 : NULL; }
                                     $$->int_number = $1->int_number * $3->int_number;
                                     $$->intArith = true;
                                 }
-
                             } else 
                                 $$ = NULL;            
                         }
     | Term DIV Factor   {   
-                            if (($3->intArith && $3->int_number == 0)
-                                 || ( !$3->intArith && $3->db_number == 0.0)) {
-                                printf(RED "<ERROR> " RESET "The divsor can't be 0 "
+                            if ($1 && $3) {
+                                if (($3->intArith && $3->int_number == 0)
+                                     || ( !$3->intArith && $3->db_number == 0.0)) {
+                                    printf(RED "<ERROR> " RESET "The divsor can't be 0 "
                                        GRN "-- line %d\n" RESET, yylineno);
-                                $$ = NULL;
-                            } else {
-                                printf("Div\n");
-                                if (!$1->intArith && !$3->intArith) {
-                                    $$->db_number = $1->db_number / $3->db_number;
-                                    $$->intArith = false;
-                                } else if (!$1->intArith && $3->intArith) {
-                                    $$->db_number = $1->db_number / $1->int_number; // db * int = db
-                                    $$->intArith = false;
-                                } else if ($1->intArith && !$3->intArith) {
-                                    $$->db_number = $1->int_number / $3->db_number;
-                                    $$->intArith = false;
+                                    $$ = NULL;
                                 } else {
-                                    $$->int_number = $1->int_number / $3->int_number;
-                                    $$->intArith = true;
+                                    printf("Div\n");
+                                    if (!$1->intArith && !$3->intArith) {
+                                        $$->db_number = $1->db_number / $3->db_number;
+                                        $$->intArith = false;
+                                    } else if (!$1->intArith && $3->intArith) {
+                                        $$->db_number = $1->db_number / $1->int_number; // db * int = db
+                                        $$->intArith = false;
+                                    } else if ($1->intArith && !$3->intArith) {
+                                        $$->db_number = $1->int_number / $3->db_number;
+                                        $$->intArith = false;
+                                    } else {
+                                        $$->int_number = $1->int_number / $3->int_number;
+                                        $$->intArith = true;
+                                    }
                                 }
                             }
                         }
