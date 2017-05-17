@@ -167,7 +167,7 @@ Arith:
                                     $$->db_number = $1->db_number + $3->db_number;
                                     $$->intArith = false;
                                 } else if (!$1->intArith && $3->intArith) {
-                                    $$->db_number = $1->db_number + $1->int_number; // db + int = db
+                                    $$->db_number = $1->db_number + $3->int_number; // db + int = db
                                     $$->intArith = false;
                                 } else if ($1->intArith && !$3->intArith) {
                                     $$->db_number = $1->int_number + $3->db_number;
@@ -185,7 +185,7 @@ Arith:
                                     $$->db_number = $1->db_number - $3->db_number;
                                     $$->intArith = false;
                                 } else if (!$1->intArith && $3->intArith) {
-                                    $$->db_number = $1->db_number - $1->int_number; // db + int = db
+                                    $$->db_number = $1->db_number - $3->int_number; // db + int = db
                                     $$->intArith = false;
                                 } else if ($1->intArith && !$3->intArith) {
                                     $$->db_number = $1->int_number - $3->db_number;
@@ -206,7 +206,7 @@ Term: Factor            {   $$ = $1 ? $1 : NULL; }
                                     $$->db_number = $1->db_number * $3->db_number;
                                     $$->intArith = false;
                                 } else if (!$1->intArith && $3->intArith) {
-                                    $$->db_number = $1->db_number * $1->int_number; // db * int = db
+                                    $$->db_number = $1->db_number * $3->int_number; // db * int = db
                                     $$->intArith = false;
                                 } else if ($1->intArith && !$3->intArith) {
                                     $$->db_number = $1->int_number * $3->db_number;
@@ -231,7 +231,7 @@ Term: Factor            {   $$ = $1 ? $1 : NULL; }
                                         $$->db_number = $1->db_number / $3->db_number;
                                         $$->intArith = false;
                                     } else if (!$1->intArith && $3->intArith) {
-                                        $$->db_number = $1->db_number / $1->int_number; // db * int = db
+                                        $$->db_number = $1->db_number / $3->int_number; // db * int = db
                                         $$->intArith = false;
                                     } else if ($1->intArith && !$3->intArith) {
                                         $$->db_number = $1->int_number / $3->db_number;

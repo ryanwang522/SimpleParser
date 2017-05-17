@@ -21,11 +21,13 @@ id          {letter}+({letter}|{digit})*
 DECLR       ([Ii][Nn][Tt]|[Dd][Oo][Uu][Bb][Ll][Ee])[ ]{id}
 sem         [;]
 space       [ ]
+COMM_C      "//".+\n
+COMM_CPP    "/"\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+"/" 
 
 %%
 
-"//".+\n                        { yylineno++;}
-"/*"(.+\n?)*"*/"                { 	
+{COMM_C}                        { yylineno++;}
+{COMM_CPP}                      { 	
                                     char* t = strtok(yytext,"\n");
                                     while( t != NULL ) {
                                           yylineno++;
